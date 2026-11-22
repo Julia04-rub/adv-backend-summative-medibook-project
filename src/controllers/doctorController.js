@@ -1,6 +1,8 @@
 const doctorModel = require('../models/doctorModel');
 const AppError = require('../utils/AppError');
 const asyncHandler = require('../utils/asyncHandler');
+const { toSqlDateTime } = require('../utils/dateTime');
+const { MAX_APPOINTMENTS_PER_DAY, STATS_WINDOW_DAYS } = require('../constants');
 const { isPositiveInt, validateDoctor } = require('../utils/validators');
 
 async function loadDoctor(idParam) {
@@ -40,4 +42,18 @@ exports.remove = asyncHandler(async (req, res) => {
   await loadDoctor(req.params.id);
   await doctorModel.remove(req.params.id);
   res.status(204).send();
+});
+
+exports.stats = asyncHandler(async (req, res) => {
+  const doctor = await loadDoctor(req.params.id);
+  const options = {
+    now: toSqlDateTime(new Date()),
+    cap: MAX_APPOINTMENTS_PER_DAY,
+    days: STATS_WINDOW_DAYS,
+  };
+  const [summary, dailyLoad] = await Promise.all([
+    doctorModel.getSummary(doctor.id, options),
+    doctorModel.getDailyLoad(doctor.id, options),
+  ]);
+  res.json({ doctor: { id: doctor.id, name: doctor.name }, ...summary, daily_load: dailyLoad });
 });
