@@ -24,5 +24,18 @@ async function create({ patientId, doctorId, apptDatetime, amountPaid }, db = po
   );
   return result.insertId;
 }
+async function findByIdForUpdate(id, db = pool) {
+  const [rows] = await db.query(`SELECT ${COLUMNS} FROM appointments WHERE id = ? FOR UPDATE`, [id]);
+  return rows[0] || null;
+}
 
-module.exports = { findById, countActiveForDay, create };
+async function markCancelled(id, { cancelledAt, refundPercent, refundAmount }, db = pool) {
+  await db.query(
+    `UPDATE appointments
+     SET status = 'cancelled', cancelled_at = ?, refund_percent = ?, refund_amount = ?
+     WHERE id = ? AND status = 'booked'`,
+    [cancelledAt, refundPercent, refundAmount, id]
+  );
+}
+
+module.exports = { findById, findByIdForUpdate, countActiveForDay, create, markCancelled };
