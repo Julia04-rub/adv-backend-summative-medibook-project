@@ -1,5 +1,6 @@
 const appointmentModel = require('../models/appointmentModel');
 const bookingService = require('../services/bookingService');
+const cancellationService = require('../services/cancellationService');
 const AppError = require('../utils/AppError');
 const asyncHandler = require('../utils/asyncHandler');
 const { parseDateTime } = require('../utils/dateTime');
@@ -28,4 +29,12 @@ exports.getOne = asyncHandler(async (req, res) => {
   const appointment = await appointmentModel.findById(req.params.id);
   if (!appointment) throw new AppError('Appointment not found', 404);
   res.json(appointment);
+});
+exports.cancel = asyncHandler(async (req, res) => {
+  if (!isPositiveInt(req.params.id)) throw new AppError('id must be a positive integer', 400);
+  const appointment = await cancellationService.cancelAppointment(req.params.id);
+  res.json({
+    appointment,
+    refund: { percent: appointment.refund_percent, amount: appointment.refund_amount },
+  });
 });
