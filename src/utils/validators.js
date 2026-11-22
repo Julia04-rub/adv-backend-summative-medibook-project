@@ -1,5 +1,8 @@
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PHONE_REGEX = /^[0-9+\-\s]{7,20}$/;
+const { SLOT_MINUTES, WORK_START_HOUR, WORK_END_HOUR } = require('../constants');
+const { pad } = require('./dateTime');
+
 
 function isPositiveInt(value) {
   return /^[1-9]\d*$/.test(String(value));
@@ -31,3 +34,27 @@ function validateDoctor(body = {}) {
 }
 
 module.exports = { isPositiveInt, validatePatient, validateDoctor };
+function validateBookingInput(body = {}) {
+  const errors = [];
+  if (!Number.isInteger(body.patient_id) || body.patient_id < 1) errors.push('patient_id must be a positive integer');
+  if (!Number.isInteger(body.doctor_id) || body.doctor_id < 1) errors.push('doctor_id must be a positive integer');
+  if (typeof body.appt_datetime !== 'string') errors.push('appt_datetime is required');
+  return errors;
+}
+
+function getSlotViolations(date, now = new Date()) {
+  const violations = [];
+  if (date <= now) violations.push('appointment must be in the future');
+
+  const startMinutes = date.getHours() * 60 + date.getMinutes();
+  const opens = WORK_START_HOUR * 60;
+  const closes = WORK_END_HOUR * 60;
+  if (startMinutes < opens || startMinutes + SLOT_MINUTES > closes) {
+    violations.push(`appointment must fit within working hours (${pad(WORK_START_HOUR)}:00-${pad(WORK_END_HOUR)}:00)`);
+  }
+  if (date.getMinutes() % SLOT_MINUTES !== 0 || date.getSeconds() !== 0) {
+    violations.push(`appointment must start on a ${SLOT_MINUTES}-minute boundary`);
+  }
+  return violations;
+}
+module.exports = { isPositiveInt, validatePatient, validateDoctor, validateBookingInput, getSlotViolations };
