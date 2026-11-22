@@ -30,5 +30,8 @@ async function update(id, { name, specialty, consultation_fee, room }) {
 async function remove(id) {
   await pool.query('DELETE FROM doctors WHERE id = ?', [id]);
 }
-
-module.exports = { findAll, findById, create, update, remove };
+async function findByIdForUpdate(id, db = pool) {
+  const [rows] = await db.query(`SELECT ${COLUMNS} FROM doctors WHERE id = ? FOR UPDATE`, [id]);
+  return rows[0] || null;
+}
+module.exports = { findAll, findById, create, update, remove, findByIdForUpdate };
