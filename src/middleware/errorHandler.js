@@ -13,9 +13,9 @@ function errorHandler(err, req, res, next) {
   if (err.code === 'ER_ROW_IS_REFERENCED_2') {
     return res.status(409).json({ error: 'Cannot delete: record is referenced by appointments' });
   }
-  if (err.statusCode) {
-    return res.status(err.statusCode).json({ error: err.message });
-  }
+ if (err.statusCode) {
+  return res.status(err.statusCode).json({ error: err.message, ...(err.code && { code: err.code }) });
+}
   console.error(err);
   return res.status(500).json({ error: 'Internal server error' });
 }
