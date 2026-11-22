@@ -15,3 +15,19 @@ function validatePatient(body = {}) {
 }
 
 module.exports = { isPositiveInt, validatePatient };
+
+function validateDoctor(body = {}) {
+  const errors = [];
+  if (typeof body.name !== 'string' || body.name.trim() === '') errors.push('name is required');
+  else if (body.name.length > 100) errors.push('name must be at most 100 characters');
+  if (typeof body.specialty !== 'string' || body.specialty.trim() === '') errors.push('specialty is required');
+  else if (body.specialty.length > 100) errors.push('specialty must be at most 100 characters');
+  if (typeof body.consultation_fee !== 'number' || !(body.consultation_fee >= 0)) {
+    errors.push('consultation_fee must be a number >= 0');
+  }
+  if (typeof body.room !== 'string' || body.room.trim() === '') errors.push('room is required');
+  else if (body.room.length > 10) errors.push('room must be at most 10 characters');
+  return errors;
+}
+
+module.exports = { isPositiveInt, validatePatient, validateDoctor };
