@@ -1,3 +1,4 @@
+const path = require('path');
 require('dotenv').config();
 
 module.exports = {
@@ -13,4 +14,5 @@ module.exports = {
     host: process.env.REDIS_HOST,
     port: process.env.REDIS_PORT,
   },
+  auditLogPath: process.env.AUDIT_LOG_PATH || path.join(__dirname, '..', '..', 'logs', 'audit.log'),
 };
