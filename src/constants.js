@@ -16,4 +16,5 @@ module.exports = {
     PROMOTE_WAITLIST: 'promote-waitlist',
     SEND_CONFIRMATION: 'send-confirmation',
   },
+  DEFAULT_LANGUAGE: 'en',
 };
