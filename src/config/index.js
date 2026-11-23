@@ -10,9 +10,9 @@ module.exports = {
     password: process.env.DB_PASSWORD,
     database: process.env.DB_NAME,
   },
-  redis: {
-    host: process.env.REDIS_HOST,
-    port: process.env.REDIS_PORT,
-  },
+redis: {
+  host: process.env.REDIS_HOST || '127.0.0.1',
+  port: Number(process.env.REDIS_PORT) || 6379,
+},
   auditLogPath: process.env.AUDIT_LOG_PATH || path.join(__dirname, '..', '..', 'logs', 'audit.log'),
 };
