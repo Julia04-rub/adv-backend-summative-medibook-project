@@ -13,12 +13,17 @@ async function bookAppointment({ patientId, doctorId, date }) {
   const appointmentId = await withTransaction(async (connection) => {
     // Locking the doctor row serialises bookings per doctor, so the count below is always current
     const doctor = await doctorModel.findByIdForUpdate(doctorId, connection);
-    if (!doctor) throw new AppError('Doctor not found', 404);
+    if (!doctor) throw new AppError('Doctor is fully booked for this day. Join the waitlist with POST /api/waitlist', 409, 'DAY_FULL');
 
     const { start, end } = getDayRange(date);
     const booked = await appointmentModel.countActiveForDay(doctorId, start, end, connection);
     if (booked >= MAX_APPOINTMENTS_PER_DAY) {
-      throw new AppError('Doctor is fully booked for this day', 409, 'DAY_FULL');
+      throw new AppError('This time slot is already booked. Join the waitlist with POST /api/waitlist', 409, 'SLOT_TAKEN');
+    }
+
+    const isBooked = await appointmentModel.isSlotBooked(doctorId, toSqlDateTime(date), connection);
+    if (isBooked) {
+      throw new AppError('This time slot is already booked. Join the waitlist with POST /api/waitlist', 409, 'SLOT_TAKEN');
     }
 
     try {
@@ -27,7 +32,7 @@ async function bookAppointment({ patientId, doctorId, date }) {
         connection
       );
     } catch (err) {
-      if (err.code === 'ER_DUP_ENTRY') throw new AppError('This time slot is already booked', 409, 'SLOT_TAKEN');
+      if (err.code === 'ER_DUP_ENTRY') throw new AppError('This time slot is already booked. Join the waitlist with POST /api/waitlist', 409, 'SLOT_TAKEN');
       throw err;
     }
   });

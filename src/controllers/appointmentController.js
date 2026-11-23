@@ -1,27 +1,16 @@
 const appointmentModel = require('../models/appointmentModel');
 const bookingService = require('../services/bookingService');
 const cancellationService = require('../services/cancellationService');
+const { enqueueConfirmation, enqueueWaitlistPromotion } = require('../services/jobQueue');
 const AppError = require('../utils/AppError');
 const asyncHandler = require('../utils/asyncHandler');
 const { logAudit } = require('../utils/auditLogger');
-const { parseDateTime } = require('../utils/dateTime');
-const { isPositiveInt, validateBookingInput, getSlotViolations } = require('../utils/validators');
+const { parseBookingRequest } = require('../utils/bookingRequest');
+const { isPositiveInt } = require('../utils/validators');
 
 exports.book = asyncHandler(async (req, res) => {
-  const errors = validateBookingInput(req.body);
-  if (errors.length) throw new AppError(errors.join('; '), 400);
-
-  const date = parseDateTime(req.body.appt_datetime);
-  if (!date) throw new AppError('appt_datetime must be a valid date like "2026-12-15 09:30"', 400);
-
-  const violations = getSlotViolations(date);
-  if (violations.length) throw new AppError(violations.join('; '), 422);
-
-  const appointment = await bookingService.bookAppointment({
-    patientId: req.body.patient_id,
-    doctorId: req.body.doctor_id,
-    date,
-  });
+  const { patientId, doctorId, date } = parseBookingRequest(req.body);
+  const appointment = await bookingService.bookAppointment({ patientId, doctorId, date });
 
   await logAudit('appointment.booked', {
     appointmentId: appointment.id,
@@ -30,6 +19,7 @@ exports.book = asyncHandler(async (req, res) => {
     appointmentDatetime: appointment.appt_datetime,
     amountPaid: appointment.amount_paid,
   });
+  await enqueueConfirmation(appointment);
 
   res.status(201).json(appointment);
 });
@@ -54,6 +44,7 @@ exports.cancel = asyncHandler(async (req, res) => {
     refundPercent: appointment.refund_percent,
     refundAmount: appointment.refund_amount,
   });
+  await enqueueWaitlistPromotion(appointment);
 
   res.json({
     appointment,
