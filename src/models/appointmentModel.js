@@ -37,5 +37,12 @@ async function markCancelled(id, { cancelledAt, refundPercent, refundAmount }, d
     [cancelledAt, refundPercent, refundAmount, id]
   );
 }
-
-module.exports = { findById, findByIdForUpdate, countActiveForDay, create, markCancelled };
+async function isSlotBooked(doctorId, apptDatetime, db = pool) {
+  const [rows] = await db.query(
+    `SELECT 1 FROM appointments
+     WHERE doctor_id = ? AND status = 'booked' AND appt_datetime = ? LIMIT 1`,
+    [doctorId, apptDatetime]
+  );
+  return rows.length > 0;
+}
+module.exports = { findById, findByIdForUpdate, countActiveForDay, isSlotBooked, create, markCancelled };
