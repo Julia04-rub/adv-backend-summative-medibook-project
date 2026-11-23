@@ -4,16 +4,21 @@ const doctorRoutes = require('./routes/doctorRoutes');
 const appointmentRoutes = require('./routes/appointmentRoutes');
 const reportRoutes = require('./routes/reportRoutes');
 const waitlistRoutes = require('./routes/waitlistRoutes');
+const feedbackRoutes = require('./routes/feedbackRoutes');
 const { notFound, errorHandler } = require('./middleware/errorHandler');
 
 const app = express();
 
 app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
+
 app.use('/api/patients', patientRoutes);
 app.use('/api/doctors', doctorRoutes);
 app.use('/api/appointments', appointmentRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/waitlist', waitlistRoutes);
+app.use('/feedback', feedbackRoutes);
+
 app.use(notFound);
 app.use(errorHandler);
 
