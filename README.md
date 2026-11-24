@@ -174,6 +174,7 @@ Every successful booking and cancellation is appended as one JSON line to `logs/
 - **Failed promotion:** if the booking fails (for example the slot was taken again), the patient is put back at the front of the queue. A permanent error such as a deleted patient moves the entry to a `waitlist:failed` list. If the worker crashes mid-job, entries left in `processing` are restored when the worker starts. A patient is never lost from both the queue and the appointments table.
 - **Confirmation jobs:** every booking, including promoted ones, enqueues a confirmation job; the worker writes the message to the audit log. If enqueuing fails, it is logged and the request still succeeds.
 
+<<<<<<< HEAD
 ### Part G: internationalization
 All page text comes from `locales/en.json` and `locales/fr.json`. `GET /feedback?lang=fr` shows French; an unsupported or missing language falls back to English. The date is formatted with `Intl.DateTimeFormat` for the active language, and all text is HTML-escaped before it is rendered.
 
@@ -187,3 +188,9 @@ npm test
 
 ## Postman collection
 Import `docs/Medibook.postman_collection.json` into Postman to run every request used in the demo: CRUD, booking rules, cancellations, waitlist, stats and reports.
+=======
+### Part G: i18n
+Page text comes from `locales/en.json` and `locales/fr.json`. `?lang=` falls back to English for anything unsupported. The date uses `Intl.DateTimeFormat` with the active language.
+
+Video Walkthrough Link: https://youtu.be/yXlwboks6Lw
+>>>>>>> 8fbd1d35f0be3952031fb60eece0816ab9530721
