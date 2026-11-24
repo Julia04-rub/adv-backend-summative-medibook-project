@@ -1,36 +1,8 @@
 # MediBook: Clinic Appointment Booking Backend
 
-A backend for a community clinic to book doctor appointments, built with **Node.js, Express, MySQL and Redis**. It enforces real booking rules (working hours, daily cap, no double booking even under concurrent requests), handles cancellations with server-calculated refunds, promotes waitlisted patients through a separate worker process, and provides SQL reports, an audit log and a bilingual feedback page.
+A backend for a community clinic to book doctor appointments, built with **Node.js, Express, MySQL, and Redis**. It enforces real booking rules (working hours, daily cap, no double booking even under concurrent requests), handles cancellations with server-calculated refunds, promotes waitlisted patients through a separate worker process, and provides SQL reports, an audit log, and a bilingual feedback page.
 
 ## Video walkthrough: <https://youtu.be/yXlwboks6Lw>
-
-## Contents
-1. [Features](#features)
-2. [Tech stack](#tech-stack)
-3. [Setup](#setup)
-4. [Running the project](#running-the-project)
-5. [Project structure](#project-structure)
-6. [Database design](#database-design)
-7. [API reference](#api-reference)
-8. [Design justifications](#design-justifications)
-9. [Testing](#testing)
-10. [Postman collection](#postman-collection)
-
-## Features
-| Assessment part | What is implemented |
-|---|---|
-| A, B Database | 3-table schema in 3NF with constraints, `schema.sql`, `seed.sql`, diagram |
-| C.1 CRUD | Patients and doctors: create, read one/all, update, delete, validated |
-| C.2 Booking | Future-only, 09:00-17:00, 30-minute boundary, max 12 per doctor per day, no shared slot under simultaneous requests |
-| C.3 Cancellation | Server-side refund tiers, atomic cancellation and refund, cancelled slot rebookable, record kept |
-| C.4-C.6 Statistics | Doctor stats, doctors report, busy-days report, all computed in SQL |
-| D Audit log | Async JSON-lines log in `logs/audit.log` |
-| E Redis queues | Waitlist, separate worker, safe promotion, confirmation jobs |
-| F Tests | 23 Jest tests, no live services needed |
-| G i18n | `/feedback` page in English and French |
-
-## Tech stack
-Node.js 20+, Express 5, MySQL 8 (`mysql2`, parameterized queries only, no ORM), Redis 7 with BullMQ, Jest.
 
 ## Setup
 
@@ -75,7 +47,7 @@ Windows PowerShell:
 Get-Content database/schema.sql | docker exec -i medibook-mysql mysql -uroot -p<password>
 Get-Content database/seed.sql | docker exec -i medibook-mysql mysql -uroot -p<password>
 ```
-With a local MySQL client you can run `mysql -u root -p < database/schema.sql` instead. The scripts create the `medibook` database.
+With a local MySQL client, you can run `mysql -u root -p < database/schema.sql` instead. The scripts create the `medibook` database.
 
 **Seed data:** 4 patients, 3 doctors (Dr. Owusu has no appointments), and 14 appointments, including Dr. Boateng's 11 of 12 slots on 2026-12-10 (one booking away from the daily cap) and one cancelled appointment with a refund.
 
@@ -86,7 +58,6 @@ npm run worker     # in a second terminal: waitlist and confirmation worker
 npm test           # unit tests (no MySQL or Redis needed)
 npm run dev        # API with auto-restart for development
 ```
-The worker is a **separate process** and must be running for waitlist promotion and confirmation jobs to be processed.
 
 ## Project structure
 ```
@@ -114,8 +85,6 @@ tests/           Jest unit tests
 | `patients` | `id`, `name`, `email`, `phone` | `email` UNIQUE, all NOT NULL |
 | `doctors` | `id`, `name`, `specialty`, `consultation_fee`, `room` | `consultation_fee` DECIMAL(10,2) with CHECK >= 0 |
 | `appointments` | `id`, `patient_id`, `doctor_id`, `appt_datetime`, `amount_paid`, `booked_on`, `status`, `cancelled_at`, `refund_percent`, `refund_amount`, `active_slot` | foreign keys (ON DELETE RESTRICT), CHECK on `amount_paid` and `refund_percent` (0, 50, 100), UNIQUE `(doctor_id, active_slot)` |
-
-Relationships: one patient has many appointments, and one doctor has many appointments. `amount_paid` is stored per appointment because it can differ from the doctor's current fee.
 
 ## API reference
 
@@ -174,7 +143,6 @@ Every successful booking and cancellation is appended as one JSON line to `logs/
 - **Failed promotion:** if the booking fails (for example the slot was taken again), the patient is put back at the front of the queue. A permanent error such as a deleted patient moves the entry to a `waitlist:failed` list. If the worker crashes mid-job, entries left in `processing` are restored when the worker starts. A patient is never lost from both the queue and the appointments table.
 - **Confirmation jobs:** every booking, including promoted ones, enqueues a confirmation job; the worker writes the message to the audit log. If enqueuing fails, it is logged and the request still succeeds.
 
-<<<<<<< HEAD
 ### Part G: internationalization
 All page text comes from `locales/en.json` and `locales/fr.json`. `GET /feedback?lang=fr` shows French; an unsupported or missing language falls back to English. The date is formatted with `Intl.DateTimeFormat` for the active language, and all text is HTML-escaped before it is rendered.
 
@@ -188,9 +156,4 @@ npm test
 
 ## Postman collection
 Import `docs/Medibook.postman_collection.json` into Postman to run every request used in the demo: CRUD, booking rules, cancellations, waitlist, stats and reports.
-=======
-### Part G: i18n
-Page text comes from `locales/en.json` and `locales/fr.json`. `?lang=` falls back to English for anything unsupported. The date uses `Intl.DateTimeFormat` with the active language.
 
-Video Walkthrough Link: https://youtu.be/yXlwboks6Lw
->>>>>>> 8fbd1d35f0be3952031fb60eece0816ab9530721
