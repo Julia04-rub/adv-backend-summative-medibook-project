@@ -94,3 +94,5 @@ Every successful booking and cancellation is appended as a JSON line to `logs/au
 
 ### Part G: i18n
 Page text comes from `locales/en.json` and `locales/fr.json`. `?lang=` falls back to English for anything unsupported. The date uses `Intl.DateTimeFormat` with the active language.
+
+Video Walkthrough Link: https://youtu.be/yXlwboks6Lw
